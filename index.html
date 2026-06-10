@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <div id="banner" class="banner">⚠️ Openstaande shiften laden...</div>
+    <div id="banner" class="banner">Bezig met laden...</div>
     <h1 id="welkom">👋 Hey...</h1>
     
     <div id="shiften-lijst">
@@ -22,42 +22,33 @@
 
     <a href="https://docs.google.com/spreadsheets/d/13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ/edit" class="card">📂 Volledige shiftenlijst (Invullen)</a>
     <a href="https://wa.me/32473378417" class="card" style="border-left-color: #28a745;">📞 Contact Coördinator</a>
-    <a href="#" class="card" style="border-left-color: #ffc107;">🤖 AI Hulp (Gemini)</a>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const naam = params.get('naam') || 'Vrijwilliger';
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
-        async function laadData() {
-            // VERVANG DEZE LINK DOOR JOUW CSV PUBLICATIE LINK
-            const csvUrl = 'HIER_DE_CSV_LINK_PLAKKEN'; 
-            
-            try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rijen = data.split('\n');
+        // Gebruik de 'gviz' API van Google om de sheet als een echte tabel te lezen
+        const sheetId = '13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ';
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+        fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                const rijen = json.table.rows;
                 
                 let htmlMijnShiften = '';
-                let eersteOpenShift = 'Geen open shiften gevonden';
-
-                rijen.forEach((rij) => {
-                    // Filter jouw shiften
-                    if (rij.toLowerCase().includes(naam.toLowerCase())) {
-                        htmlMijnShiften += `<div class="shift-item">${rij.replace(/,/g, ' ')}</div>`;
-                    }
-                    // Eenvoudige check voor open shiften (rijen met tijden maar zonder namen)
-                    if (eersteOpenShift === 'Geen open shiften gevonden' && rij.includes('u') && !rij.toLowerCase().includes('michael') && !rij.toLowerCase().includes('sacha') && !rij.toLowerCase().includes('cederic') && !rij.toLowerCase().includes('axel') && !rij.toLowerCase().includes('zoë')) {
-                         eersteOpenShift = rij.replace(/,/g, ' ');
+                rijen.forEach(r => {
+                    // Zoek in alle cellen van de rij naar de naam
+                    const rijTekst = r.c.map(c => c ? c.v : '').join(' ');
+                    if (rijTekst.toLowerCase().includes(naam.toLowerCase())) {
+                        htmlMijnShiften += `<div class="shift-item">${rijTekst}</div>`;
                     }
                 });
-                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen persoonlijke shiften gevonden.';
-                document.getElementById('banner').innerText = '🔥 Volgende open shift: ' + eersteOpenShift;
-            } catch (e) {
-                document.getElementById('banner').innerText = '⚠️ Kon data niet laden (Publiceer je sheet als CSV).';
-            }
-        }
-        laadData();
+                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen shiften gevonden.';
+                document.getElementById('banner').innerText = '🔥 Gereed';
+            });
     </script>
 </body>
 </html>

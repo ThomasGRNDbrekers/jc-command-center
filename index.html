@@ -2,6 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JC Command Center</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f9; padding: 20px; color: #333; max-width: 500px; margin: auto; }
@@ -11,7 +12,7 @@
     </style>
 </head>
 <body>
-    <div id="banner" class="banner">Laden...</div>
+    <div id="banner" class="banner">Zoeken naar open shiften...</div>
     <h1 id="welkom">👋 Hey...</h1>
     
     <div id="shiften-lijst">
@@ -21,40 +22,51 @@
 
     <a href="https://docs.google.com/spreadsheets/d/13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ/edit" class="card">📂 Volledige shiftenlijst (Invullen)</a>
     <a href="https://wa.me/32473378417" class="card" style="border-left-color: #28a745;">📞 Contact Coördinator</a>
+    <a href="#" class="card" style="border-left-color: #ffc107;">🤖 AI Hulp (Gemini)</a>
 
     <script>
+        // Naam ophalen uit de URL
         const params = new URLSearchParams(window.location.search);
         const naam = (params.get('naam') || 'Vrijwilliger').toLowerCase();
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
+        // Google Sheet data ophalen via API
         const sheetId = '13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ';
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
         fetch(url)
             .then(res => res.text())
             .then(text => {
-                // Strip Google's JSON wrapper
                 const json = JSON.parse(text.substring(47).slice(0, -2));
                 const rijen = json.table.rows;
                 
                 let mijnShiften = [];
-                let eersteOpen = "Geen";
+                let eersteOpen = null;
 
                 rijen.forEach(r => {
-                    const rowData = r.c.map(c => (c && c.v) ? String(c.v) : '').join(' ');
+                    const cellen = r.c.map(c => (c && c.v) ? String(c.v) : '');
+                    const rijTekst = cellen.join(' ');
                     
-                    if (rowData.toLowerCase().includes(naam)) {
-                        mijnShiften.push(rowData);
+                    // Filter jouw shiften
+                    if (rijTekst.toLowerCase().includes(naam)) {
+                        mijnShiften.push(rijTekst);
                     }
-                    if (eersteOpen === "Geen" && rowData.includes('u') && !/michael|sacha|cederic|axel|zoe|ferre/i.test(rowData)) {
-                        eersteOpen = rowData;
+                    
+                    // Zoek de eerste open shift (tijd aanwezig + geen bekende naam)
+                    if (!eersteOpen && /[0-9]{1,2}u[0-9]{0,2}/.test(rijTekst) && 
+                        !/michael|sacha|cederic|axel|zoe|ferre/i.test(rijTekst)) {
+                        eersteOpen = rijTekst;
                     }
                 });
 
                 document.getElementById('data').innerHTML = mijnShiften.length > 0 
                     ? mijnShiften.map(s => `<div class="shift-item">${s}</div>`).join('') 
                     : 'Geen shiften gevonden.';
-                document.getElementById('banner').innerText = '🔥 Volgende open shift: ' + eersteOpen;
+                
+                document.getElementById('banner').innerText = eersteOpen ? '🔥 Volgende open shift: ' + eersteOpen : 'Geen open shiften gevonden!';
+            })
+            .catch(err => {
+                document.getElementById('banner').innerText = '⚠️ Kon de lijst niet laden.';
             });
     </script>
 </body>

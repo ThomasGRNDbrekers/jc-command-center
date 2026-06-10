@@ -2,7 +2,6 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JC Command Center</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f9; padding: 20px; color: #333; max-width: 500px; margin: auto; }
@@ -12,7 +11,7 @@
     </style>
 </head>
 <body>
-    <div id="banner" class="banner">Bezig met laden...</div>
+    <div id="banner" class="banner">Laden...</div>
     <h1 id="welkom">👋 Hey...</h1>
     
     <div id="shiften-lijst">
@@ -29,39 +28,33 @@
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
         const sheetId = '13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ';
-        // Dit is de correcte API-call om de data als JSON te krijgen
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
         fetch(url)
             .then(res => res.text())
             .then(text => {
+                // Strip Google's JSON wrapper
                 const json = JSON.parse(text.substring(47).slice(0, -2));
                 const rijen = json.table.rows;
                 
                 let mijnShiften = [];
-                let eersteOpenShift = null;
+                let eersteOpen = "Geen";
 
                 rijen.forEach(r => {
-                    const cellen = r.c.map(c => (c && c.v) ? String(c.v) : '');
-                    const rijTekst = cellen.join(' ');
-
-                    // Check op mijn naam
-                    if (rijTekst.toLowerCase().includes(naam)) {
-                        mijnShiften.push(rijTekst);
-                    }
+                    const rowData = r.c.map(c => (c && c.v) ? String(c.v) : '').join(' ');
                     
-                    // Check op open shift (rij heeft tijd-informatie maar geen naam)
-                    if (!eersteOpenShift && rijTekst.includes('u') && 
-                        !/michael|sacha|cederic|axel|zoe/i.test(rijTekst)) {
-                        eersteOpenShift = rijTekst;
+                    if (rowData.toLowerCase().includes(naam)) {
+                        mijnShiften.push(rowData);
+                    }
+                    if (eersteOpen === "Geen" && rowData.includes('u') && !/michael|sacha|cederic|axel|zoe|ferre/i.test(rowData)) {
+                        eersteOpen = rowData;
                     }
                 });
 
                 document.getElementById('data').innerHTML = mijnShiften.length > 0 
                     ? mijnShiften.map(s => `<div class="shift-item">${s}</div>`).join('') 
                     : 'Geen shiften gevonden.';
-                
-                document.getElementById('banner').innerText = eersteOpenShift ? '🔥 Open shift: ' + eersteOpenShift : 'Geen open shiften.';
+                document.getElementById('banner').innerText = '🔥 Volgende open shift: ' + eersteOpen;
             });
     </script>
 </body>

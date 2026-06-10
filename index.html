@@ -6,15 +6,21 @@
     <title>JC Command Center</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f9; padding: 20px; color: #333; max-width: 500px; margin: auto; }
+        .banner { background: #dc3545; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: bold; text-align: center; }
         .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; text-decoration: none; color: #333; font-weight: bold; border-left: 5px solid #007bff; }
         .shift-item { background: #e7f3ff; padding: 10px; margin-bottom: 8px; border-radius: 8px; font-size: 0.9em; border: 1px solid #cce5ff; }
     </style>
 </head>
 <body>
+    <div id="banner" class="banner">⚠️ Zoeken naar open shiften...</div>
     <h1 id="welkom">👋 Hey...</h1>
-    <h3>📅 Jouw geplande shiften:</h3>
-    <div id="data">Shiften ophalen...</div>
+    
+    <div id="shiften-lijst">
+        <h3>📅 Jouw geplande shiften:</h3>
+        <div id="data">Laden...</div>
+    </div>
 
+    <a href="https://docs.google.com/spreadsheets/d/13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ/edit" class="card">📂 Volledige shiftenlijst (Invullen)</a>
     <a href="https://wa.me/32473378417" class="card" style="border-left-color: #28a745;">📞 Contact Coördinator</a>
     <a href="#" class="card" style="border-left-color: #ffc107;">🤖 AI Hulp (Gemini)</a>
 
@@ -23,27 +29,33 @@
         const naam = params.get('naam') || 'Vrijwilliger';
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
-        async function laadShiften() {
-            // VERVANG DEZE URL DOOR JOUW GEPUBLECEERDE CSV LINK
-            const csvUrl = 'PLAK_HIER_JE_GECONVERTEERDE_CSV_LINK'; 
+        async function laadData() {
+            // PLAK HIER ONDER JOUW CSV LINK
+            const csvUrl = 'https://docs.google.com/spreadsheets/d/13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ/edit?usp=sharing';
             
             try {
                 const response = await fetch(csvUrl);
                 const data = await response.text();
                 const rijen = data.split('\n');
-                let html = '';
+                
+                let htmlMijnShiften = '';
+                let eersteOpenShift = 'Geen open shiften';
 
-                rijen.forEach(rij => {
+                rijen.forEach((rij) => {
                     if (rij.toLowerCase().includes(naam.toLowerCase())) {
-                        html += `<div class="shift-item">${rij.replace(/,/g, ' ')}</div>`;
+                        htmlMijnShiften += `<div class="shift-item">${rij.replace(/,/g, ' ')}</div>`;
+                    }
+                    if (eersteOpenShift === 'Geen open shiften' && rij.includes('14u00')) {
+                         eersteOpenShift = rij.replace(/,/g, ' ');
                     }
                 });
-                document.getElementById('data').innerHTML = html || 'Geen shiften gevonden voor ' + naam;
+                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen shiften gevonden.';
+                document.getElementById('banner').innerText = '🔥 Volgende open shift: ' + eersteOpenShift;
             } catch (e) {
-                document.getElementById('data').innerHTML = 'Kon shiften niet laden.';
+                document.getElementById('banner').innerText = 'Fout bij laden data.';
             }
         }
-        laadShiften();
+        laadData();
     </script>
 </body>
 </html>

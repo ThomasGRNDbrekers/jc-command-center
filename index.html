@@ -25,11 +25,11 @@
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const naam = params.get('naam') || 'Vrijwilliger';
+        const naam = (params.get('naam') || 'Vrijwilliger').toLowerCase();
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
-        // Gebruik de 'gviz' API van Google om de sheet als een echte tabel te lezen
         const sheetId = '13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ';
+        // Dit is de correcte API-call om de data als JSON te krijgen
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
         fetch(url)
@@ -38,16 +38,30 @@
                 const json = JSON.parse(text.substring(47).slice(0, -2));
                 const rijen = json.table.rows;
                 
-                let htmlMijnShiften = '';
+                let mijnShiften = [];
+                let eersteOpenShift = null;
+
                 rijen.forEach(r => {
-                    // Zoek in alle cellen van de rij naar de naam
-                    const rijTekst = r.c.map(c => c ? c.v : '').join(' ');
-                    if (rijTekst.toLowerCase().includes(naam.toLowerCase())) {
-                        htmlMijnShiften += `<div class="shift-item">${rijTekst}</div>`;
+                    const cellen = r.c.map(c => (c && c.v) ? String(c.v) : '');
+                    const rijTekst = cellen.join(' ');
+
+                    // Check op mijn naam
+                    if (rijTekst.toLowerCase().includes(naam)) {
+                        mijnShiften.push(rijTekst);
+                    }
+                    
+                    // Check op open shift (rij heeft tijd-informatie maar geen naam)
+                    if (!eersteOpenShift && rijTekst.includes('u') && 
+                        !/michael|sacha|cederic|axel|zoe/i.test(rijTekst)) {
+                        eersteOpenShift = rijTekst;
                     }
                 });
-                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen shiften gevonden.';
-                document.getElementById('banner').innerText = '🔥 Gereed';
+
+                document.getElementById('data').innerHTML = mijnShiften.length > 0 
+                    ? mijnShiften.map(s => `<div class="shift-item">${s}</div>`).join('') 
+                    : 'Geen shiften gevonden.';
+                
+                document.getElementById('banner').innerText = eersteOpenShift ? '🔥 Open shift: ' + eersteOpenShift : 'Geen open shiften.';
             });
     </script>
 </body>

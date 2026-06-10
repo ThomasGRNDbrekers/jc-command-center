@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JC Command Center</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; color: #333; }
+        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; text-decoration: none; color: #333; font-weight: bold; border-left: 5px solid #007bff; }
+        #shiften-lijst { margin-top: 20px; }
+        .shift-item { background: #e7f3ff; padding: 10px; margin-bottom: 5px; border-radius: 5px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1 id="welkom">👋 Hey...</h1>
+    
+    <div id="shiften-lijst">
+        <h3>Jouw shiften:</h3>
+        <div id="data">Laden...</div>
+    </div>
+
+    <a href="https://wa.me/32473378417" class="card" style="border-left-color: #28a745;">📞 Contact Coördinator</a>
+    <a href="#" class="card" style="border-left-color: #ffc107;">🤖 AI Hulp (Gemini)</a>
+
+   <script>
+    const params = new URLSearchParams(window.location.search);
+    const naam = params.get('naam') || 'Gast';
+    document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
+
+    async function laadShiften() {
+        // PLAK HIER JE GEPUBLICEERDE CSV LINK
+        const csvUrl = 'PLAK_HIER_JE_CSV_LINK'; 
+        try {
+            const response = await fetch(csvUrl);
+            const data = await response.text();
+            const rijen = data.split('\n');
+            let html = '';
+
+            // Filter rijen waar de naam in voorkomt
+            rijen.forEach(rij => {
+                if (rij.toLowerCase().includes(naam.toLowerCase())) {
+                    html += `<div class="shift-item">${rij.replace(/,/g, ' | ')}</div>`;
+                }
+            });
+            document.getElementById('data').innerHTML = html || 'Geen shiften gevonden voor jou.';
+        } catch (e) {
+            document.getElementById('data').innerHTML = 'Kon shiften niet laden. Controleer of de sheet gepubliceerd is.';
+        }
+    }
+    laadShiften();
+    </script>
+</body>
+</html>

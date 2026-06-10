@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JC Command Center</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; color: #333; max-width: 500px; margin: auto; }
-        .banner { background: #dc3545; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: bold; text-align: center; }
-        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; text-decoration: none; color: #333; font-weight: bold; border-left: 5px solid #007bff; }
-        .shift-item { background: #e7f3ff; padding: 10px; margin-bottom: 8px; border-radius: 8px; font-size: 0.9em; border: 1px solid #cce5ff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f9; padding: 20px; color: #333; max-width: 500px; margin: auto; }
+        .banner { background: #dc3545; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; font-weight: bold; text-align: center; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3); }
+        .card { background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block; text-decoration: none; color: #333; font-weight: 600; border-left: 6px solid #007bff; }
+        .shift-item { background: #e7f3ff; padding: 12px; margin-bottom: 8px; border-radius: 8px; font-size: 0.95em; border-left: 4px solid #007bff; }
+        h1 { text-align: center; font-size: 1.5em; }
+        h3 { margin-top: 25px; color: #555; }
     </style>
 </head>
 <body>
-    <div id="banner" class="banner">Zoeken naar open shiften...</div>
+    <div id="banner" class="banner">Even geduld, we checken de planning...</div>
     <h1 id="welkom">👋 Hey...</h1>
     
     <div id="shiften-lijst">
@@ -25,12 +27,10 @@
     <a href="#" class="card" style="border-left-color: #ffc107;">🤖 AI Hulp (Gemini)</a>
 
     <script>
-        // Naam ophalen uit de URL
         const params = new URLSearchParams(window.location.search);
         const naam = (params.get('naam') || 'Vrijwilliger').toLowerCase();
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
-        // Google Sheet data ophalen via API
         const sheetId = '13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ';
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
@@ -47,26 +47,28 @@
                     const cellen = r.c.map(c => (c && c.v) ? String(c.v) : '');
                     const rijTekst = cellen.join(' ');
                     
-                    // Filter jouw shiften
+                    // Filter persoonlijke shiften
                     if (rijTekst.toLowerCase().includes(naam)) {
                         mijnShiften.push(rijTekst);
                     }
                     
-                    // Zoek de eerste open shift (tijd aanwezig + geen bekende naam)
-                    if (!eersteOpen && /[0-9]{1,2}u[0-9]{0,2}/.test(rijTekst) && 
-                        !/michael|sacha|cederic|axel|zoe|ferre/i.test(rijTekst)) {
-                        eersteOpen = rijTekst;
+                    // Filter open shiften (minstens 10 tekens om lege regels te negeren)
+                    const isTijd = /[0-9]{1,2}u[0-9]{0,2}/.test(rijTekst);
+                    const isBezet = /michael|sacha|cederic|axel|zoe|ferre/i.test(rijTekst);
+                    
+                    if (!eersteOpen && isTijd && !isBezet && rijTekst.length > 10) {
+                        eersteOpen = rijTekst.replace(/\s+/g, ' ');
                     }
                 });
 
                 document.getElementById('data').innerHTML = mijnShiften.length > 0 
                     ? mijnShiften.map(s => `<div class="shift-item">${s}</div>`).join('') 
-                    : 'Geen shiften gevonden.';
+                    : '<p>Geen shiften gevonden. Geniet van je vrije tijd!</p>';
                 
-                document.getElementById('banner').innerText = eersteOpen ? '🔥 Volgende open shift: ' + eersteOpen : 'Geen open shiften gevonden!';
+                document.getElementById('banner').innerText = eersteOpen ? '🔥 Volgende open shift: ' + eersteOpen : '✅ Alles volgeboekt!';
             })
-            .catch(err => {
-                document.getElementById('banner').innerText = '⚠️ Kon de lijst niet laden.';
+            .catch(() => {
+                document.getElementById('banner').innerText = '⚠️ Oeps, er ging iets mis bij het laden.';
             });
     </script>
 </body>

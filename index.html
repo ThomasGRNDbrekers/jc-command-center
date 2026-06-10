@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <div id="banner" class="banner">⚠️ Zoeken naar open shiften...</div>
+    <div id="banner" class="banner">⚠️ Openstaande shiften laden...</div>
     <h1 id="welkom">👋 Hey...</h1>
     
     <div id="shiften-lijst">
@@ -30,8 +30,8 @@
         document.getElementById('welkom').innerText = '👋 Hey ' + naam.charAt(0).toUpperCase() + naam.slice(1);
 
         async function laadData() {
-            // PLAK HIER ONDER JOUW CSV LINK
-            const csvUrl = 'https://docs.google.com/spreadsheets/d/13LXagLh7Q1SJknFzQfhfAm-CLy6DyTQhVNUvzpwMcvQ/edit?usp=sharing';
+            // VERVANG DEZE LINK DOOR JOUW CSV PUBLICATIE LINK
+            const csvUrl = 'HIER_DE_CSV_LINK_PLAKKEN'; 
             
             try {
                 const response = await fetch(csvUrl);
@@ -39,20 +39,22 @@
                 const rijen = data.split('\n');
                 
                 let htmlMijnShiften = '';
-                let eersteOpenShift = 'Geen open shiften';
+                let eersteOpenShift = 'Geen open shiften gevonden';
 
                 rijen.forEach((rij) => {
+                    // Filter jouw shiften
                     if (rij.toLowerCase().includes(naam.toLowerCase())) {
                         htmlMijnShiften += `<div class="shift-item">${rij.replace(/,/g, ' ')}</div>`;
                     }
-                    if (eersteOpenShift === 'Geen open shiften' && rij.includes('14u00')) {
+                    // Eenvoudige check voor open shiften (rijen met tijden maar zonder namen)
+                    if (eersteOpenShift === 'Geen open shiften gevonden' && rij.includes('u') && !rij.toLowerCase().includes('michael') && !rij.toLowerCase().includes('sacha') && !rij.toLowerCase().includes('cederic') && !rij.toLowerCase().includes('axel') && !rij.toLowerCase().includes('zoë')) {
                          eersteOpenShift = rij.replace(/,/g, ' ');
                     }
                 });
-                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen shiften gevonden.';
+                document.getElementById('data').innerHTML = htmlMijnShiften || 'Geen persoonlijke shiften gevonden.';
                 document.getElementById('banner').innerText = '🔥 Volgende open shift: ' + eersteOpenShift;
             } catch (e) {
-                document.getElementById('banner').innerText = 'Fout bij laden data.';
+                document.getElementById('banner').innerText = '⚠️ Kon data niet laden (Publiceer je sheet als CSV).';
             }
         }
         laadData();
